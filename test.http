@@ -1,0 +1,43 @@
+### PING
+GET http://localhost:5000/api/v1/code-detection/ping HTTP/1.1
+
+### START THE DETECTION JOB
+POST http://localhost:5000/api/v1/code-detection/start HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "repositoryUrl": "https://github.com/openmvg/openmvg",
+  "language": "cpp",
+  "branch": "v1.6"
+}
+
+### STATUS OF DETECTION JOB
+POST http://localhost:5000/api/v1/code-detection/status HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "taskId": "929275e4-3266-4947-a06d-83aec162bae1"
+}
+
+### STATISTICS OF DETECTION
+POST http://localhost:5000/api/v1/code-detection/statistics HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "taskId": "929275e4-3266-4947-a06d-83aec162bae1"
+}
+
+### RESULT OF DETECTION
+### PageNumber 从1开始
+POST http://localhost:5000/api/v1/code-detection/result/page HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "taskId": "929275e4-3266-4947-a06d-83aec162bae1",
+  "pageNumber": 1,
+  "pageSize": 5
+}

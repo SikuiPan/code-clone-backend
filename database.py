@@ -1,6 +1,10 @@
+import datetime
+from zoneinfo import ZoneInfo
+
 from utils import *
 
 from pymongo import MongoClient, ASCENDING
+import math
 
 sample_structure = {
     "task_id": "abcdef-abcd-abcd-abcd-abcd",
@@ -22,37 +26,65 @@ class MongoDB:
         self.db.result.insert_one({
             "task_id": task_id,
             "status": STATUS_CREATED,
+            "create_at": datetime.datetime.now(datetime.UTC),
             "results": [],
             "error": "",
         })
 
     def start_the_task(self, task_id):
         self.db.result.update_one({"task_id": task_id},
-                                  {"$set": {"status": STATUS_PENDING}})
+                                  {"$set": {"status": STATUS_PENDING, "start_time": datetime.datetime.now(datetime.UTC)}})
 
     def save_error(self, task_id, exception: Exception):
         self.db.result.update_one({"task_id": task_id},
-                                  {"$set": {"status": STATUS_ERROR, "error": str(exception)}})
+                                  {"$set": {"status": STATUS_ERROR, "error": str(exception), "end_time": datetime.datetime.now(datetime.UTC)}})
+
+    @staticmethod
+    def convert_time(time_obj):
+        if time_obj is None:
+            return None
+        tz = ZoneInfo("Asia/Shanghai")
+        return time_obj.replace(tzinfo=datetime.UTC).astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
 
     def query_task_status(self, task_id):
-        return self.db.result.find_one({"task_id": task_id}).get("status")
+        result = self.db.result.find_one({"task_id": task_id})
+        if result is None:
+            raise TaskIdNotFound
+        status = result.get("status")
+        create_at = self.convert_time(result.get("create_at"))
+        start_time = self.convert_time(result.get("start_time"))
+        end_time = self.convert_time(result.get("end_time"))
+        error = result.get("error")
+
+        return status, create_at, start_time, end_time, error
 
     def query_task_statistics(self, task_id):
-        return self.db.result.aggregate([
-            {"$match": {"task_id": task_id}},
-            {"$project": {"result_cnt": {"$size": "$results"}}}
-        ])
+        result = self.db.result.find_one({"task_id": task_id})
+        if result is None:
+            raise TaskIdNotFound
+        status = result.get("status")
+        if status != STATUS_FINISHED:
+            raise NotFinished
+        vul_cnt = result.get("vul_cnt")
+        vul_func_cnt = result.get("vul_func_cnt")
+        vul_file_cnt = result.get("vul_file_cnt")
 
-    def save_result(self, celery_uuid, results):
+        return vul_cnt, vul_func_cnt, vul_file_cnt
+
+    def save_result(self, celery_uuid, results, vul_file_cnt, vul_func_cnt, vul_cnt):
         self.db.result.update_one({"task_id": celery_uuid},
-                           {"$set" : {"status": STATUS_FINISHED, "results": results}})
+                           {"$set" : {"status": STATUS_FINISHED, "results": results, "end_time": datetime.datetime.now(datetime.UTC),
+                                      "vul_file_cnt": vul_file_cnt, "vul_func_cnt": vul_func_cnt, "vul_cnt": vul_cnt}})
 
     def get_result(self, task_id, page, page_size):
+        vul_cnt, _, _ = self.query_task_statistics(task_id)
         skip = (page - 1) * page_size
-        return self.db.result.aggregate([
-            {"$match": {"class_id": task_id}},  # 1. 筛选班级
+        total_page = int(math.ceil(vul_cnt / page_size))
+        results = list(self.db.result.aggregate([
+            {"$match": {"task_id": task_id}},  # 1. 筛选班级
             {"$unwind": "$results"},  # 2. 展开日志数组
             {"$replaceRoot": {"newRoot": "$results"}},  # 3. 将日志提升为根字段
             {"$skip": skip},  # 4. 跳过前N条
             {"$limit": page_size}  # 5. 限制返回数量
-        ])
+        ]))
+        return total_page, vul_cnt, results
