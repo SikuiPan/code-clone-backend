@@ -1,6 +1,5 @@
 import json
 import traceback
-from sys import exception
 
 from flask import Flask, Blueprint, request
 
@@ -9,10 +8,17 @@ from database import MongoDB
 from utils import *
 
 code_detector = Blueprint('code_detector', __name__)
-database_url = "mongodb://localhost:27017"
+# database_url = "mongodb://localhost:27018"
+database_url = "mongodb://222.20.126.217:27018"
 
 detectors = {
     "cpp": "fire/fire:v1.3.0",
+    "C#": "csharp:latest",
+    "JavaScript": "fire-javascript:latest",
+    "Python": "fire-python:latest",
+    "Go": "firego:latest",
+    "PHP": "fire-php:latest",
+    "Java": "fire-java:latest",
 }
 
 def error_message(exception: Exception, **kwargs) -> str:
@@ -57,6 +63,7 @@ def start_code_detection():
         database = MongoDB(database_url)
         database.create_task(task.id)
     except Exception as e:
+        traceback.print_exc()  # This will print the full traceback to stderr
         return error_message(DatabaseError), 500
 
     return json.dumps({
@@ -153,6 +160,7 @@ def result():
     except FileNotFoundError as e:
         return error_message(e, task_id=task_id), 404
     except NotImplementedError as e:
+        traceback.print_exc()   # debug only
         return error_message(e, task_id=task_id), 400
     except Exception as e:
         return error_message(DatabaseError), 500
@@ -169,4 +177,4 @@ app = Flask(__name__)
 app.register_blueprint(code_detector, url_prefix="/api/v1/code-detection")
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port=5000, debug=True)
+    app.run("0.0.0.0", port=5001, debug=True)

@@ -5,7 +5,7 @@ from database import MongoDB
 @app.task(bind=True)
 def submit_detection(self, image_name, git_url, branch) -> (dict, Exception):
     global detectors
-    database = MongoDB("mongodb://localhost:27017")
+    database = MongoDB("mongodb://localhost:27018")
     # STATUS changes to pending
     database.start_the_task(self.request.id)
     # Initialize Detect Docker

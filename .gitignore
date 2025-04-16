@@ -1,2 +1,6 @@
 .venv
 .idea
+*.log
+*.out
+__pycache__
+celery_task/__pycache__
