@@ -75,6 +75,8 @@ network = "code-clone-backend_network"
 
 **注意！当前方法启动的mongodb数据库和redis数据库均没有设置密码，仅限开发过程使用。**
 
+**注意！当前方法启动的两个数据库的数据都没有持久化，仅供开发过程使用，正式上线请修改compose文件将两个数据库持久化。**
+
 ### Celery启动
 
 注意这里只启动1个celery worker，不然服务器可能会扛不住。
@@ -121,6 +123,8 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 
 ## API文档
 
+请求示例参见`test.http`文档
+
 ### 发起代码检测任务接口
 
 用于发起代码检测任务，支持上传文件类型（Git仓库或文件）。
@@ -142,6 +146,14 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 - C/C++语言： `cpp`
 - 待补充
 
+```json
+{
+  "repositoryUrl": "https://github.com/openmvg/openmvg",
+  "language": "cpp",
+  "branch": "v1.6"
+}
+```
+
 #### 返回参数
 
 - 状态码：`202`
@@ -149,6 +161,12 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 | 参数名    | 类型     | 描述       |
 |--------|--------|----------|
 | taskId | string | 任务Id（唯一） |
+
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f"
+}
+```
 
 ### 获取检测任务状态接口
 
@@ -164,6 +182,11 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 |--------|--------|-----|------|
 | taskId | string | Yes | 任务Id |
 
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f"
+}
+```
 
 #### 返回参数
 
@@ -176,10 +199,24 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 | createAt     | string      | 任务创建时间                |
 | startTime    | string/None | 任务开始时间（未开始则为None）     |
 | endTime      | string/None | 任务结束时间（未开始或出现错误为None） |
-| errorMessage | string/None | 错误信息（无错误则为None）       |
+| errorMessage | string | 错误信息（无错误则为空字符串）       |
 
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f",
+  "status": "Pending", 
+  "createAt": "2025-04-17 13:06:11", 
+  "startTime": "2025-04-17 13:06:11", 
+  "endTime": null, 
+  "errorMessage": ""
+}
+```
 
 ### 获取检测结果统计接口
+
+获取检测任务的统计结果，包括成功、失败的代码检测数量等。
+
+请在status为`Finished`的情况下调用这个结果，否则将会报出“检测未完成或出错”的错误。
 
 - `POST` /api/v1/code-detection/results/statistics
 - Accept: application/json
@@ -190,6 +227,12 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 | 参数名    | 类型     | 必填  | 描述   |
 |--------|--------|-----|------|
 | taskId | string | Yes | 任务Id |
+
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f"
+}
+```
 
 #### 返回参数
 
@@ -204,7 +247,20 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 
 一个检出的漏洞对视为一个漏洞，若一个函数和多个cve对应，那么计多个`vulCnt`
 
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f",
+  "vulCnt": 42, 
+  "vulFuncCnt": 29, 
+  "vulFileCnt": 12
+ }
+```
+
 ### 检测结果分页查询接口
+
+分页查询指定任务的检测结果，支持按检测状态筛选。
+
+请在status为`Finished`的情况下调用这个结果，否则将会报出“检测未完成或出错”的错误。
 
 - `POST` /api/v1/code-detection/results/page
 - Accept: application/json
@@ -217,6 +273,14 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 | taskId     | string  | Yes | 任务Id    |
 | pageNumber | integer | Yes | 页码，从1开始 |
 | pageSize   | integer | Yes | 每页数量    |
+
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f",
+  "pageNumber": 1,
+  "pageSize": 5
+}
+```
 
 #### 返回参数
 
@@ -239,14 +303,49 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
             {
               "target_file": "vul.c",
               "target_func": "vul_func",
-              "cve": ["CVE-2001-1234", "CVE-2002-2345"]
+              "cve": "CVE-2001-1234"
             }
     ]
 }
 ```
 
-| 参数名         | 类型           | 描述              |
-|-------------|--------------|-----------------|
-| target_file | string       | 含漏洞的文件名         |
-| target_func | string       | 含漏洞的函数名         |
-| cve         | list[string] | cve列表，由cve字符串组成 |
+| 参数名       | 类型     | 描述              |
+|-----------|--------|-----------------|
+| file_name | string | 含漏洞的文件名         |
+| func_name | string | 含漏洞的函数名         |
+| cve       | string | cve列表，由cve字符串组成 |
+
+`results` 字段已删除部分结果
+
+```json
+{
+  "taskId": "a39b3e25-97d7-41c9-b456-9c35c945d13f", 
+  "pageNumber": 1, 
+  "pageSize": 5, 
+  "totalPages": 9, 
+  "totalCount": 42, 
+  "results": [
+    {
+      "file_name": "src/third_party/png/pngset.c", 
+      "func_name": "png_set_IHDR", 
+      "cve": "CVE-2015-0973"
+    }
+  ]
+}
+```
+
+### 错误情况下返回结构
+
+- 状态码：`400`,`404`,`500`
+
+| 参数名          | 类型           | 描述  |
+|--------------|--------------|-----|
+| errorMessage | string       | 错误信息 |
+| taskId       | string | 引发错误的taskId（optional） |
+
+```json
+{
+  "errorMessage": "task_id not found",
+  "taskId": "929275e4-3266-4947-a06d-83aec162bae1"
+}
+```

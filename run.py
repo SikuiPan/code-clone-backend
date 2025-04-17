@@ -8,8 +8,7 @@ from database import MongoDB
 from utils import *
 
 code_detector = Blueprint('code_detector', __name__)
-# database_url = "mongodb://localhost:27018"
-database_url = "mongodb://222.20.126.217:27018"
+database_url = "mongodb://localhost:27018"
 
 detectors = {
     "cpp": "fire/fire:v1.3.0",
@@ -100,7 +99,7 @@ def status():
         database = MongoDB(database_url)
         status, create_at, start_time, end_time, error = database.query_task_status(task_id)
     except FileNotFoundError as e:
-        return error_message(e, task_id=task_id), 404
+        return error_message(e, taskId=task_id), 404
     except Exception as e:
         return error_message(DatabaseError), 500    # internal error
 
@@ -128,9 +127,9 @@ def statistics():
         database = MongoDB(database_url)
         vul_cnt, vul_func_cnt, vul_file_cnt = database.query_task_statistics(task_id)
     except FileNotFoundError as e:
-        return error_message(e, task_id=task_id), 404
+        return error_message(e, taskId=task_id), 404
     except NotImplementedError as e:
-        return error_message(e, task_id=task_id), 400
+        return error_message(e, taskId=task_id), 400
     except Exception as e:
         return error_message(e), 500
 
@@ -158,10 +157,10 @@ def result():
         database = MongoDB(database_url)
         total_pages, total_count, results = database.get_result(task_id, page_number, page_size)
     except FileNotFoundError as e:
-        return error_message(e, task_id=task_id), 404
+        return error_message(e, taskId=task_id), 404
     except NotImplementedError as e:
         traceback.print_exc()   # debug only
-        return error_message(e, task_id=task_id), 400
+        return error_message(e, taskId=task_id), 400
     except Exception as e:
         return error_message(DatabaseError), 500
 
@@ -177,4 +176,4 @@ app = Flask(__name__)
 app.register_blueprint(code_detector, url_prefix="/api/v1/code-detection")
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port=5001, debug=True)
+    app.run("0.0.0.0", port=5000, debug=True)

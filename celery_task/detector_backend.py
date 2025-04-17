@@ -96,7 +96,7 @@ class DetectorBackend:
         for file_name in info.keys():
             for func_name in info[file_name].keys():
                 for cve in info[file_name][func_name]:
-                    info_list.append({"file_name": file_name, "func_name": func_name, "cve": cve})
+                    info_list.append({"fileName": file_name, "funcName": func_name, "cve": cve})
 
         return info_list, vul_file_cnt, vul_funcs_cnt, vul_cnt
 
