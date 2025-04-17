@@ -297,11 +297,11 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
 
 `results` 检测结果的一条结果的结构如下：
 
-| 参数名       | 类型     | 描述      |
-|-----------|--------|---------|
-| file_name | string | 含漏洞的文件名 |
-| func_name | string | 含漏洞的函数名 |
-| cve       | string | cve号    |
+| 参数名      | 类型     | 描述      |
+|----------|--------|---------|
+| fileName | string | 含漏洞的文件名 |
+| funcName | string | 含漏洞的函数名 |
+| cve      | string | cve号    |
 
 `results` 字段已删除部分结果
 
@@ -314,8 +314,8 @@ MongoDB存储结构可参考`database.py`文件中的sample_structure。关于st
   "totalCount": 42, 
   "results": [
     {
-      "file_name": "src/third_party/png/pngset.c", 
-      "func_name": "png_set_IHDR", 
+      "fileName": "src/third_party/png/pngset.c", 
+      "funcName": "png_set_IHDR", 
       "cve": "CVE-2015-0973"
     }
   ]
