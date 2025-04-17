@@ -115,7 +115,7 @@ def status():
         "errorMessage": error,
     }), status_code
 
-@code_detector.post("/statistics")
+@code_detector.post("/results/statistics")
 def statistics():
     # Params Parsing
     data = request.get_json()
@@ -136,9 +136,9 @@ def statistics():
 
     return json.dumps({
         "taskId": task_id,
-        "vul_cnt": vul_cnt,
-        "vul_func_cnt": vul_func_cnt,
-        "vul_file_cnt": vul_file_cnt,
+        "vulCnt": vul_cnt,
+        "vulFuncCnt": vul_func_cnt,
+        "vulFileCnt": vul_file_cnt,
     }), 200
 
 
