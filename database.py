@@ -10,7 +10,7 @@ sample_structure = {
     "task_id": "abcdef-abcd-abcd-abcd-abcd",
     "status": STATUS_FINISHED,  # INTERGER
     "results": [
-        {"target_file": "vul.c", "target_func": "vul_func", "cve": ["CVE-2001-1234", "CVE-2002-2345"]}
+        {"target_file": "vul.c", "target_func": "vul_func", "cve": "CVE-2001-1234"}
     ],
     "error": "errorMsg or empty str"
 }
